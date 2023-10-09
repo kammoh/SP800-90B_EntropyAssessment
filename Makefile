@@ -55,6 +55,27 @@ COND_LDFLAGS  = $(LDFLAGS) $(MPFR_CFLAGS) $(GMP_LDFLAGS)
 
 LDFLAGS += -lbz2 -lpthread
 
+LIB_PREFIX ?= lib
+LIB_SUFFIX ?= .a
+SHLIB_LDFLAGS ?= -shared -fPIC
+
+ifeq ($(SHLIB_SUFFIX),)
+ifeq ($(OS),Darwin)
+	SHLIB_SUFFIX=.dylib
+else
+	SHLIB_SUFFIX=.so
+endif
+endif
+
+
+ifeq ($(OS),Darwin)
+	SHLIB_LDFLAGS += -undefined dynamic_lookup
+else
+	SHLIB_SUFFIX=.so
+	SHLIB_LDFLAGS += -Wl,-soname,$(SHARED_LIB)
+endif
+
+
 ######
 # Main operations
 ######
@@ -64,26 +85,29 @@ all: iid non_iid restart conditioning transpose
 clean:
 	rm -f *.o ea_iid ea_non_iid ea_restart ea_conditioning ea_transpose selftest/*.res
 
-%.o: %.cpp
+%.o: cpp/%.cpp
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -c -o $@
 
 # divsufsort.o: ../contrib/libdivsufsort/sssort.c ../contrib/libdivsufsort/trsort.c ../contrib/libdivsufsort/divsufsort.c
-# 	$(CC) $(CFLAGS) -c $?
+# 	$(CC) $(CFLAGS) -c $^
 
 iid: iid_main.o
-	$(CXX) $(CXXFLAGS) $? -o ea_$@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o ea_$@ $(LDFLAGS)
 
 non_iid: non_iid_main.o	
-	$(CXX) $(CXXFLAGS) $? -o ea_$@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o ea_$@ $(LDFLAGS)
 
 restart: restart_main.o
-	$(CXX) $(CXXFLAGS) $? -o ea_$@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o ea_$@ $(LDFLAGS)
 
 conditioning: conditioning_main.o
-	$(CXX) $(CXXFLAGS) $? -o ea_$@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o ea_$@ $(LDFLAGS)
 
 transpose: transpose_main.o
-	$(CXX) $(CXXFLAGS) $? -o ea_$@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o ea_$@ $(LDFLAGS)
+
+######
+
